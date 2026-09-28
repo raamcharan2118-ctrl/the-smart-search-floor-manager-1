@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Free Class Locator - Smart Floor Manager</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars and glowing rings */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    .pulse-glow-emerald {
+      box-shadow: 0 0 15px -2px rgba(16, 185, 129, 0.45);
+    }
+    .pulse-glow-amber {
+      box-shadow: 0 0 15px -2px rgba(245, 158, 11, 0.45);
+    }
+    .pulse-glow-rose {
+      box-shadow: 0 0 15px -2px rgba(244, 63, 94, 0.4);
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white flex flex-col">
+
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-black text-xl tracking-tighter">
+        <i data-lucide="compass" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg font-bold text-white tracking-tight">Free Class Locator</h1>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Campus Live</span>
+        </div>
+        <p class="text-xs text-slate-400 hidden sm:block">Campus Floor Manager & Smart Study Space Tracker</p>
+      </div>
+    </div>
+
+    <!-- Quick Stats Pill -->
+    <div class="flex items-center gap-2 sm:gap-4 bg-slate-900/90 border border-slate-800 rounded-xl p-1.5 px-3 text-xs">
+      <div class="flex items-center gap-1.5 text-emerald-400">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+        <span id="stat-free-count" class="font-bold">6</span> Free
+      </div>
+      <div class="h-3 w-[1px] bg-slate-800"></div>
+      <div class="flex items-center gap-1.5 text-amber-400">
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        <span id="stat-soon-count" class="font-bold">1</span> &lt; 1hr
+      </div>
+      <div class="h-3 w-[1px] bg-slate-800"></div>
+      <div class="flex items-center gap-1.5 text-rose-400">
+        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        <span id="stat-occ-count" class="font-bold">3</span> Busy
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    <!-- Top Hero Section with AI Search Bar -->
+    <section class="relative rounded-2xl p-5 sm:p-7 glass-panel overflow-hidden border border-indigo-500/20 shadow-2xl">
+      <div class="absolute -top-24 -right-24 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative z-10 max-w-3xl mx-auto text-center space-y-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-medium">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          AI Room Finder & Timetable Inspector
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          Where can your team sit without getting kicked out?
+        </h2>
+        <p class="text-slate-400 text-xs sm:text-sm">
+          Describe what you need in plain English, or scrub the timeline to inspect room occupancy across all 3 floors.
+        </p>
+
+        <!-- Search Bar -->
+        <div class="mt-4">
+          <form id="ai-search-form" class="relative flex items-center">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="sparkles" class="w-5 h-5 text-indigo-400 animate-pulse"></i>
+            </div>
+            <input 
+              type="text" 
+              id="ai-prompt-input" 
+              placeholder='e.g. "I need an AC room on the ground floor for me and my team for the next 2 hours."' 
+              class="w-full pl-11 pr-28 py-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-inner"
+            />
+            <button 
+              type="submit" 
+              id="ai-search-btn"
+              class="absolute right-1.5 inset-y-1.5 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50"
+            >
+              <span>Ask AI</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </form>
+
+          <!-- Prompt Suggestions -->
+          <div class="flex flex-wrap items-center justify-center gap-2 mt-3 pt-1">
+            <span class="text-[11px] text-slate-500 font-medium">Try asking:</span>
+            <button class="prompt-chip text-xs px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition">
+              "Ground floor AC room for 2 hours"
+            </button>
+            <button class="prompt-chip text-xs px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition">
+              "Quiet room on 2nd floor with 40+ seats"
+            </button>
+            <button class="prompt-chip text-xs px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition">
+              "Room with projector right now for 3 hours"
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Time Scrubber & Manual Filters -->
+    <section class="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        
+        <!-- Day & Quick Preset Controls -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1">
+            <button data-day="Mon" class="day-tab px-3 py-1.5 rounded-lg text-xs font-semibold transition">Mon</button>
+            <button data-day="Tue" class="day-tab px-3 py-1.5 rounded-lg text-xs font-semibold transition">Tue</button>
+            <button data-day="Wed" class="day-tab px-3 py-1.5 rounded-lg text-xs font-semibold transition">Wed</button>
+            <button data-day="Thu" class="day-tab px-3 py-1.5 rounded-lg text-xs font-semibold transition">Thu</button>
+            <button data-day="Fri" class="day-tab px-3 py-1.5 rounded-lg text-xs font-semibold transition">Fri</button>
+          </div>
+
+          <button id="snap-now-btn" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-indigo-300 border border-indigo-500/20 transition active:scale-95">
+            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+            <span>Snap to Right Now (1:30 PM)</span>
+          </button>
+        </div>
+
+        <!-- Filter Tags -->
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="cursor-pointer text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 select-none">
+            <input type="checkbox" id="filter-ac" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0">
+            <span>❄️ AC Only</span>
+          </label>
+          <label class="cursor-pointer text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 select-none">
+            <input type="checkbox" id="filter-projector" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0">
+            <span>📽️ Projector</span>
+          </label>
+          <label class="cursor-pointer text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 select-none">
+            <input type="checkbox" id="filter-freeonly" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0">
+            <span>🟢 Free Only</span>
+          </label>
+          <select id="filter-capacity" class="text-xs bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-300 focus:outline-none">
+            <option value="0">Any Capacity</option>
+            <option value="40">40+ seats</option>
+            <option value="50">50+ seats</option>
+            <option value="60">60+ seats</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Time Scrubber Slider -->
+      <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800/80">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Simulated Time:</span>
+            <span id="display-time-badge" class="px-2.5 py-0.5 rounded-md text-sm font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">
+              1:30 PM
+            </span>
+          </div>
+          <span class="text-[11px] text-slate-500">Timetable Span: 8:00 AM – 6:00 PM</span>
+        </div>
+        <input 
+          type="range" 
+          id="time-slider" 
+          min="480" 
+          max="1080" 
+          step="15" 
+          value="810" 
+          class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500 focus:outline-none"
+        />
+        <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1 px-1">
+          <span>8:00 AM</span>
+          <span>10:00 AM</span>
+          <span>12:00 PM</span>
+          <span>2:00 PM</span>
+          <span>4:00 PM</span>
+          <span>6:00 PM</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Results & Reasoning Banner (Hidden by default, triggered on search) -->
+    <section id="ai-results-banner" class="hidden glass-panel rounded-2xl p-5 border border-indigo-500/40 bg-gradient-to-r from-indigo-950/40 via-slate-900/50 to-emerald-950/40 transition-all">
+      <div class="flex items-start justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2">
+            <i data-lucide="bot" class="w-5 h-5 text-indigo-400"></i>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">AI Floor Recommendation</h3>
+            <span id="ai-badge-source" class="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-medium">Gemini 3 Flash</span>
+          </div>
+          <p id="ai-reasoning-text" class="text-sm text-slate-300 leading-relaxed"></p>
+          <div id="ai-filters-extracted" class="flex flex-wrap items-center gap-2 pt-1 text-xs"></div>
+        </div>
+        <button id="close-ai-results" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- Floor-by-Floor Section -->
+    <section id="floor-sections-container" class="space-y-8">
+      <!-- Ground Floor -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xs">
+              0F
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Ground Floor</h3>
+              <p class="text-[11px] text-slate-400">Main Quadrangle Entrance & Lab Wings</p>
+            </div>
+          </div>
+          <span class="text-xs text-slate-400" id="ground-floor-count">3 rooms</span>
+        </div>
+        <div id="grid-ground" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- 1st Floor -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs">
+              1F
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">First Floor</h3>
+              <p class="text-[11px] text-slate-400">Department Classrooms & Multimedia Lecture Theatres</p>
+            </div>
+          </div>
+          <span class="text-xs text-slate-400" id="first-floor-count">4 rooms</span>
+        </div>
+        <div id="grid-first" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+      </div>
+
+      <!-- 2nd Floor -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-xs">
+              2F
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Second Floor</h3>
+              <p class="text-[11px] text-slate-400">Quiet Study Wings & Seminar Halls</p>
+            </div>
+          </div>
+          <span class="text-xs text-slate-400" id="second-floor-count">3 rooms</span>
+        </div>
+        <div id="grid-second" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Room Details Drawer / Modal -->
+  <div id="room-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-6 transition-opacity">
+    <div class="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <!-- Header -->
+      <div class="p-5 border-b border-slate-800 flex items-start justify-between bg-slate-950/40">
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <h3 id="modal-room-id" class="text-xl font-black text-white tracking-tight">Room G01</h3>
+            <span id="modal-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold">Free for 2 hrs</span>
+          </div>
+          <p id="modal-room-subtitle" class="text-xs text-slate-400">Ground Floor • Capacity: 60 students</p>
+        </div>
+        <button id="modal-close-btn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Scrollable content -->
+      <div class="p-5 overflow-y-auto space-y-5">
+        <!-- Safe Stay Alert Card -->
+        <div id="modal-safe-banner" class="rounded-xl p-4 bg-emerald-950/30 border border-emerald-500/30 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+            <i data-lucide="shield-check" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h4 id="modal-safe-heading" class="text-sm font-bold text-white">Safe to sit right now</h4>
+            <p id="modal-safe-desc" class="text-xs text-slate-300">No scheduled lecture until 3:00 PM (1 hr 30 mins remaining).</p>
+          </div>
+        </div>
+
+        <!-- Amenities & Features -->
+        <div>
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Room Amenities</h4>
+          <div id="modal-amenities" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Full Day Timeline for Selected Day -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Day Timetable (<span id="modal-current-day">Mon</span>)</h4>
+            <span class="text-[11px] text-slate-500">8:00 AM – 6:00 PM</span>
+          </div>
+          <div id="modal-timetable-list" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="p-4 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between gap-3">
+        <button id="modal-copy-directions" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition active:scale-95">
+          <i data-lucide="map-pin" class="w-4 h-4 text-indigo-400"></i>
+          <span>Copy Directions</span>
+        </button>
+        <button id="modal-share-room" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition shadow-md active:scale-95">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          <span>Share Room to Group</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 px-4 py-3 rounded-xl bg-slate-900 border border-indigo-500/40 text-slate-200 text-xs shadow-2xl flex items-center gap-2">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toast-msg">Room link copied!</span>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // 1. DATASET: 10 Classroom Profiles & Full Mon-Fri Timetables
+    // -------------------------------------------------------------
+    const ROOMS = [
+      // Ground Floor
+      {
+        id: "G01",
+        floor: "ground",
+        floorLabel: "Ground Floor",
+        name: "Seminar Hall Alpha",
+        capacity: 60,
+        hasAC: true,
+        hasProjector: true,
+        hasSmartBoard: false,
+        powerOutlets: "High (Under desks)",
+        quietScore: 8.5,
+        directions: "Enter main quadrangle, turn left past Admin office, 3rd door on right.",
+        schedule: {
+          Mon: [
+            { start: 540, end: 630, code: "CS101", title: "Intro to Python", prof: "Dr. Ramesh", cap: 55 },
+            { start: 660, end: 750, code: "EC204", title: "Signals & Systems", prof: "Prof. Priya", cap: 50 },
+            { start: 900, end: 990, code: "ME301", title: "Thermodynamics", prof: "Dr. K. Varma", cap: 45 }
+          ],
+          Tue: [
+            { start: 600, end: 690, code: "CS201", title: "Data Structures", prof: "Dr. Ramesh", cap: 58 },
+            { start: 840, end: 930, code: "MA101", title: "Calculus I", prof: "Prof. Nair", cap: 60 }
+          ],
+          Wed: [
+            { start: 540, end: 630, code: "CS101", title: "Intro to Python", prof: "Dr. Ramesh", cap: 55 },
+            { start: 720, end: 840, code: "CS101-L", title: "Python Lab Tutorial", prof: "TA Vignesh", cap: 40 },
+            { start: 960, end: 1020, code: "HS102", title: "Professional Ethics", prof: "Dr. Sharon", cap: 50 }
+          ],
+          Thu: [
+            { start: 660, end: 780, code: "CS302", title: "Database Systems", prof: "Dr. Meenakshi", cap: 50 },
+            { start: 840, end: 960, code: "EC204", title: "Signals Lab", prof: "Prof. Priya", cap: 45 }
+          ],
+          Fri: [
+            { start: 540, end: 660, code: "AI401", title: "Machine Learning", prof: "Dr. Aris", cap: 55 },
+            { start: 900, end: 990, code: "CS499", title: "Capstone Briefing", prof: "Dept Head", cap: 60 }
+          ]
+        }
+      },
+      {
+        id: "G02",
+        floor: "ground",
+        floorLabel: "Ground Floor",
+        name: "Tutorial Room G2",
+        capacity: 40,
+        hasAC: false,
+        hasProjector: false,
+        hasSmartBoard: false,
+        powerOutlets: "Moderate (Wall edges)",
+        quietScore: 7.0,
+        directions: "Opposite to Department Library, ground floor east corridor.",
+        schedule: {
+          Mon: [
+            { start: 600, end: 690, code: "MA201", title: "Linear Algebra", prof: "Dr. Sharma", cap: 35 },
+            { start: 780, end: 870, code: "EE101", title: "Basic Electronics", prof: "Prof. Sudha", cap: 38 }
+          ],
+          Tue: [
+            { start: 540, end: 630, code: "EN101", title: "Technical English", prof: "Ms. Clara", cap: 35 },
+            { start: 720, end: 810, code: "MA201", title: "Linear Algebra Tut", prof: "TA Arjun", cap: 30 },
+            { start: 900, end: 990, code: "CS102", title: "Discrete Math", prof: "Dr. Sharma", cap: 38 }
+          ],
+          Wed: [
+            { start: 660, end: 750, code: "EE101", title: "Basic Electronics", prof: "Prof. Sudha", cap: 38 },
+            { start: 840, end: 930, code: "EN101", title: "Technical English", prof: "Ms. Clara", cap: 35 }
+          ],
+          Thu: [
+            { start: 600, end: 690, code: "MA201", title: "Linear Algebra", prof: "Dr. Sharma", cap: 35 },
+            { start: 780, end: 870, code: "CS102", title: "Discrete Math", prof: "Dr. Sharma", cap: 38 },
+            { start: 930, end: 1020, code: "EE102", title: "Network Analysis", prof: "Prof. Sudha", cap: 36 }
+          ],
+          Fri: [
+            { start: 720, end: 810, code: "STUDY", title: "Peer Tutoring Group", prof: "Student Council", cap: 25 }
+          ]
+        }
+      },
+      {
+        id: "G03",
+        floor: "ground",
+        floorLabel: "Ground Floor",
+        name: "Interactive Systems Lab",
+        capacity: 80,
+        hasAC: true,
+        hasProjector: true,
+        hasSmartBoard: true,
+        powerOutlets: "Abundant (Every station)",
+        quietScore: 8.0,
+        directions: "Ground floor north wing, beside Robotics Center.",
+        schedule: {
+          Mon: [
+            { start: 540, end: 720, code: "CS210-L", title: "Algorithms Lab", prof: "Prof. Anand", cap: 75 },
+            { start: 840, end: 1020, code: "CS312-L", title: "Web Tech Studio", prof: "Dr. Swathi", cap: 70 }
+          ],
+          Tue: [
+            { start: 660, end: 840, code: "CS410-L", title: "Cloud Computing Lab", prof: "Dr. K. Varma", cap: 75 },
+            { start: 900, end: 1020, code: "OPEN", title: "Open Hackathon Practice", prof: "IEEE Club", cap: 60 }
+          ],
+          Wed: [
+            { start: 540, end: 720, code: "CS210-L", title: "Algorithms Lab", prof: "Prof. Anand", cap: 75 },
+            { start: 780, end: 900, code: "IT202", title: "Data Communication", prof: "Dr. Swathi", cap: 65 }
+          ],
+          Thu: [
+            { start: 720, end: 900, code: "CS312-L", title: "Web Tech Studio", prof: "Dr. Swathi", cap: 70 },
+            { start: 960, end: 1050, code: "SEM01", title: "Guest Speaker Colloquium", prof: "Visiting Faculty", cap: 80 }
+          ],
+          Fri: [
+            { start: 600, end: 780, code: "CS410-L", title: "Cloud Computing Lab", prof: "Dr. K. Varma", cap: 75 },
+            { start: 840, end: 990, code: "PROJ", title: "Senior Project Reviews", prof: "Review Board", cap: 70 }
+          ]
+        }
+      },
+
+      // 1st Floor
+      {
+        id: "101",
+        floor: "first",
+        floorLabel: "1st Floor",
+        name: "Lecture Hall 101",
+        capacity: 50,
+        hasAC: true,
+        hasProjector: true,
+        hasSmartBoard: false,
+        powerOutlets: "Moderate",
+        quietScore: 9.0,
+        directions: "Take central stairs to 1st floor, first door on the right.",
+        schedule: {
+          Mon: [
+            { start: 600, end: 690, code: "CS305", title: "Operating Systems", prof: "Dr. Banerjee", cap: 48 },
+            { start: 720, end: 810, code: "CS308", title: "Computer Networks", prof: "Dr. Jacob", cap: 45 },
+            { start: 900, end: 990, code: "HS201", title: "Economics for Engineers", prof: "Prof. Rita", cap: 42 }
+          ],
+          Tue: [
+            { start: 540, end: 630, code: "CS305", title: "Operating Systems", prof: "Dr. Banerjee", cap: 48 },
+            { start: 660, end: 750, code: "CS308", title: "Computer Networks", prof: "Dr. Jacob", cap: 45 },
+            { start: 840, end: 960, code: "MATH3", title: "Probability & Stats", prof: "Dr. Roy", cap: 50 }
+          ],
+          Wed: [
+            { start: 600, end: 690, code: "CS305", title: "OS Kernel Internals", prof: "Dr. Banerjee", cap: 48 },
+            { start: 840, end: 960, code: "CYBER", title: "Information Security", prof: "Prof. Dave", cap: 40 }
+          ],
+          Thu: [
+            { start: 540, end: 630, code: "CS308", title: "Computer Networks", prof: "Dr. Jacob", cap: 45 },
+            { start: 720, end: 810, code: "HS201", title: "Economics for Engineers", prof: "Prof. Rita", cap: 42 },
+            { start: 900, end: 990, code: "MATH3", title: "Probability & Stats", prof: "Dr. Roy", cap: 50 }
+          ],
+          Fri: [
+            { start: 660, end: 780, code: "DEV3", title: "Agile Software Eng", prof: "Industry Fellow", cap: 45 },
+            { start: 840, end: 930, code: "SEMINAR", title: "Tech Reading Club", prof: "Student Leads", cap: 30 }
+          ]
+        }
+      },
+      {
+        id: "102",
+        floor: "first",
+        floorLabel: "1st Floor",
+        name: "Seminar Room 102",
+        capacity: 30,
+        hasAC: false,
+        hasProjector: false,
+        hasSmartBoard: false,
+        powerOutlets: "Low",
+        quietScore: 9.5,
+        directions: "1st floor west wing, quiet alcove past Faculty Room A.",
+        schedule: {
+          Mon: [
+            { start: 540, end: 630, code: "GER1", title: "German Level 1", prof: "Frau Weber", cap: 22 },
+            { start: 690, end: 750, code: "JAP1", title: "Japanese Conversational", prof: "Sensei Tanaka", cap: 20 }
+          ],
+          Tue: [
+            { start: 780, end: 870, code: "GER1", title: "German Level 1", prof: "Frau Weber", cap: 22 },
+            { start: 900, end: 990, code: "FREN", title: "French Beginners", prof: "Mme. Dubois", cap: 25 }
+          ],
+          Wed: [
+            { start: 540, end: 630, code: "JAP1", title: "Japanese Conversational", prof: "Sensei Tanaka", cap: 20 },
+            { start: 720, end: 810, code: "PHIL", title: "Logic & Critical Thinking", prof: "Dr. Thomas", cap: 28 }
+          ],
+          Thu: [
+            { start: 660, end: 750, code: "GER1", title: "German Level 1", prof: "Frau Weber", cap: 22 },
+            { start: 840, end: 930, code: "FREN", title: "French Beginners", prof: "Mme. Dubois", cap: 25 }
+          ],
+          Fri: [
+            { start: 600, end: 720, code: "CREAT", title: "Creative Writing Circle", prof: "Ms. Miller", cap: 20 }
+          ]
+        }
+      },
+      {
+        id: "103",
+        floor: "first",
+        floorLabel: "1st Floor",
+        name: "Multimedia Hall 103",
+        capacity: 60,
+        hasAC: true,
+        hasProjector: true,
+        hasSmartBoard: false,
+        powerOutlets: "Abundant",
+        quietScore: 7.5,
+        directions: "1st floor central connector hall, next to Elevator 2.",
+        schedule: {
+          Mon: [
+            { start: 660, end: 780, code: "AI302", title: "Deep Learning Foundations", prof: "Dr. Aris", cap: 58 },
+            { start: 840, end: 960, code: "DS201", title: "Data Visualization", prof: "Prof. Neha", cap: 52 }
+          ],
+          Tue: [
+            { start: 540, end: 660, code: "IOT1", title: "Internet of Things", prof: "Dr. Chacko", cap: 50 },
+            { start: 720, end: 840, code: "AI302", title: "Deep Learning Lab", prof: "Dr. Aris", cap: 55 },
+            { start: 900, end: 1020, code: "UX101", title: "UI/UX Design Studio", prof: "Prof. Sarah", cap: 45 }
+          ],
+          Wed: [
+            { start: 660, end: 780, code: "DS201", title: "Data Visualization", prof: "Prof. Neha", cap: 52 },
+            { start: 900, end: 1020, code: "VR200", title: "AR/VR Development", prof: "Dr. Varma", cap: 48 }
+          ],
+          Thu: [
+            { start: 540, end: 660, code: "AI302", title: "Deep Learning Foundations", prof: "Dr. Aris", cap: 58 },
+            { start: 780, end: 900, code: "IOT1", title: "Internet of Things", prof: "Dr. Chacko", cap: 50 }
+          ],
+          Fri: [
+            { start: 540, end: 720, code: "HACK", title: "Industry Mentorship Meet", prof: "Tech Leads", cap: 60 },
+            { start: 840, end: 960, code: "UX101", title: "UI/UX Critique Lab", prof: "Prof. Sarah", cap: 45 }
+          ]
+        }
+      },
+      {
+        id: "104",
+        floor: "first",
+        floorLabel: "1st Floor",
+        name: "Classroom 104",
+        capacity: 45,
+        hasAC: true,
+        hasProjector: false,
+        hasSmartBoard: false,
+        powerOutlets: "Moderate",
+        quietScore: 8.8,
+        directions: "1st floor eastern corridor, adjacent to student lounge.",
+        schedule: {
+          Mon: [
+            { start: 540, end: 630, code: "ENV101", title: "Environmental Science", prof: "Dr. Geetha", cap: 40 },
+            { start: 720, end: 840, code: "MGT2", title: "Principles of Management", prof: "Prof. Bansal", cap: 42 }
+          ],
+          Tue: [
+            { start: 600, end: 690, code: "ENV101", title: "Environmental Science", prof: "Dr. Geetha", cap: 40 },
+            { start: 840, end: 930, code: "MGT2", title: "Principles of Management", prof: "Prof. Bansal", cap: 42 },
+            { start: 960, end: 1050, code: "FIN1", title: "Personal Finance Workshop", prof: "Guest CPA", cap: 35 }
+          ],
+          Wed: [
+            { start: 780, end: 900, code: "ENV101", title: "Ecology Fieldwork Debrief", prof: "Dr. Geetha", cap: 40 }
+          ],
+          Thu: [
+            { start: 600, end: 720, code: "MGT2", title: "Case Studies in Leadership", prof: "Prof. Bansal", cap: 42 },
+            { start: 840, end: 960, code: "COMM", title: "Public Speaking Lab", prof: "Ms. Miller", cap: 35 }
+          ],
+          Fri: [
+            { start: 540, end: 660, code: "BIO1", title: "Bio-Informatics Survey", prof: "Dr. Lakshmi", cap: 38 },
+            { start: 780, end: 900, code: "BIO1-T", title: "Computational Bio Tut", prof: "TA Karthik", cap: 30 }
+          ]
+        }
+      },
+
+      // 2nd Floor
+      {
+        id: "201",
+        floor: "second",
+        floorLabel: "2nd Floor",
+        name: "Research Reading Room 201",
+        capacity: 40,
+        hasAC: false,
+        hasProjector: false,
+        hasSmartBoard: false,
+        powerOutlets: "Abundant (Desk lamps)",
+        quietScore: 9.9,
+        directions: "2nd floor south quiet wing, designated silent zone.",
+        schedule: {
+          Mon: [
+            { start: 600, end: 690, code: "RES900", title: "PhD Methodology", prof: "Dean Research", cap: 20 },
+            { start: 900, end: 1020, code: "ADV-ALGO", title: "Advanced Graph Algorithms", prof: "Dr. Ramesh", cap: 25 }
+          ],
+          Tue: [
+            { start: 840, end: 960, code: "MATH-H", title: "Topology & Geometry", prof: "Dr. Nair", cap: 25 }
+          ],
+          Wed: [
+            { start: 600, end: 720, code: "RES900", title: "Thesis Writing Colloquium", prof: "Dean Research", cap: 20 }
+          ],
+          Thu: [
+            { start: 780, end: 900, code: "ADV-ALGO", title: "Advanced Graph Algorithms", prof: "Dr. Ramesh", cap: 25 }
+          ],
+          Fri: [
+            // Extremely empty on Fridays
+            { start: 900, end: 1020, code: "DISSERT", title: "Dissertation Defense", prof: "Committee", cap: 30 }
+          ]
+        }
+      },
+      {
+        id: "202",
+        floor: "second",
+        floorLabel: "2nd Floor",
+        name: "Studio Classroom 202",
+        capacity: 50,
+        hasAC: true,
+        hasProjector: true,
+        hasSmartBoard: false,
+        powerOutlets: "Moderate",
+        quietScore: 8.6,
+        directions: "2nd floor center atrium, directly across from elevator bank.",
+        schedule: {
+          Mon: [
+            { start: 540, end: 660, code: "SE401", title: "Software Architecture", prof: "Dr. Gupta", cap: 45 },
+            { start: 720, end: 840, code: "CYBER2", title: "Network Penetration Testing", prof: "Prof. Dave", cap: 40 },
+            { start: 900, end: 1020, code: "SE401-T", title: "Design Patterns Studio", prof: "TA Meera", cap: 35 }
+          ],
+          Tue: [
+            { start: 600, end: 720, code: "SE401", title: "Software Architecture", prof: "Dr. Gupta", cap: 45 },
+            { start: 840, end: 990, code: "CYBER2", title: "Pen Testing Lab", prof: "Prof. Dave", cap: 40 }
+          ],
+          Wed: [
+            { start: 540, end: 660, code: "CLOUD", title: "Distributed Microservices", prof: "Dr. K. Varma", cap: 48 },
+            { start: 780, end: 900, code: "SE401", title: "DevOps & CI/CD", prof: "Dr. Gupta", cap: 45 }
+          ],
+          Thu: [
+            { start: 660, end: 780, code: "CLOUD", title: "Distributed Microservices", prof: "Dr. K. Varma", cap: 48 },
+            { start: 840, end: 960, code: "TEST", title: "Automated QA Frameworks", prof: "Dr. Gupta", cap: 40 }
+          ],
+          Fri: [
+            { start: 600, end: 750, code: "CAPSTONE", title: "Project Sprint Demo", prof: "All Faculty", cap: 50 }
+          ]
+        }
+      },
+      {
+        id: "203",
+        floor: "second",
+        floorLabel: "2nd Floor",
+        name: "Grand Seminar Hall 203",
+        capacity: 70,
+        hasAC: true,
+        hasProjector: true,
+        hasSmartBoard: true,
+        powerOutlets: "Abundant",
+        quietScore: 9.1,
+        directions: "2nd floor east wing, glass double doors facing green courtyard.",
+        schedule: {
+          Mon: [
+            { start: 660, end: 810, code: "ENT101", title: "Entrepreneurship & Startups", prof: "Dr. Sheela", cap: 65 },
+            { start: 900, end: 1050, code: "AI-GUEST", title: "Distinguished Lecture Series", prof: "Invited Scholar", cap: 70 }
+          ],
+          Tue: [
+            { start: 600, end: 720, code: "ENT101", title: "Venture Capital Pitching", prof: "Dr. Sheela", cap: 65 },
+            { start: 780, end: 900, code: "LAW", title: "Intellectual Property & Patents", prof: "Adv. Menon", cap: 60 }
+          ],
+          Wed: [
+            { start: 840, end: 990, code: "LAW", title: "Tech Law Case Studies", prof: "Adv. Menon", cap: 60 }
+          ],
+          Thu: [
+            { start: 540, end: 720, code: "CONF", title: "Departmental Colloquium", prof: "Dept Faculty", cap: 70 },
+            { start: 840, end: 990, code: "ENT101", title: "Startup Incubation Lab", prof: "Dr. Sheela", cap: 65 }
+          ],
+          Fri: [
+            { start: 660, end: 840, code: "SEMINAR", title: "Dean's Open Forum", prof: "University Dean", cap: 70 }
+          ]
+        }
+      }
+    ];
+
+    // -------------------------------------------------------------
+    // 2. STATE & TIME HELPERS
+    // -------------------------------------------------------------
+    let currentDay = "Mon";
+    let currentMinutes = 810; // Default: 1:30 PM (810 mins from midnight)
+    let aiFilterResults = null; // List of matched room ids if filtered by AI
+
+    function formatMinutesToTime(mins) {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      const period = h >= 12 ? "PM" : "AM";
+      const displayH = h % 12 === 0 ? 12 : h % 12;
+      const displayM = m < 10 ? `0${m}` : m;
+      return `${displayH}:${displayM} ${period}`;
+    }
+
+    function formatDuration(mins) {
+      if (mins >= 180) return "Free rest of the day";
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      if (h > 0 && m > 0) return `${h} hr ${m} min`;
+      if (h > 0) return `${h} hr${h > 1 ? 's' : ''}`;
+      return `${m} mins`;
+    }
+
+    // Inspect room occupancy for given day & minute
+    function getRoomStatus(room, day, timeMins) {
+      const daySlots = (room.schedule[day] || []).slice().sort((a, b) => a.start - b.start);
+      
+      // 1. Check if occupied currently
+      const activeSlot = daySlots.find(s => timeMins >= s.start && timeMins < s.end);
+      if (activeSlot) {
+        const remainingOccupied = activeSlot.end - timeMins;
+        return {
+          state: "occupied",
+          badgeColor: "rose",
+          label: `Occupied (${activeSlot.code})`,
+          detail: `${activeSlot.title} with ${activeSlot.prof}`,
+          until: activeSlot.end,
+          remaining: remainingOccupied,
+          activeSlot
+        };
+      }
+
+      // 2. Find next upcoming slot after current time
+      const nextSlot = daySlots.find(s => s.start > timeMins);
+      const dayEndTime = 1080; // 6:00 PM
+      const freeUntil = nextSlot ? nextSlot.start : dayEndTime;
+      const safeDuration = freeUntil - timeMins;
+
+      if (safeDuration <= 0) {
+        return {
+          state: "closed",
+          badgeColor: "slate",
+          label: "Day Closed",
+          detail: "Timetable closed for the day",
+          until: dayEndTime,
+          remaining: 0
+        };
+      }
+
+      if (safeDuration < 60) {
+        return {
+          state: "limited",
+          badgeColor: "amber",
+          label: `Free for ${safeDuration}m`,
+          detail: nextSlot ? `Next: ${nextSlot.code} at ${formatMinutesToTime(nextSlot.start)}` : "Until 6:00 PM closing",
+          until: freeUntil,
+          remaining: safeDuration,
+          nextSlot
+        };
+      }
+
+      return {
+        state: "free",
+        badgeColor: "emerald",
+        label: nextSlot ? `Free for ${formatDuration(safeDuration)}` : "Free all afternoon",
+        detail: nextSlot ? `Next class: ${nextSlot.code} at ${formatMinutesToTime(nextSlot.start)}` : "No further classes scheduled today!",
+        until: freeUntil,
+        remaining: safeDuration,
+        nextSlot
+      };
+    }
+
+    // -------------------------------------------------------------
+    // 3. UI RENDERING & GRID UPDATES
+    // -------------------------------------------------------------
+    const gridGround = document.getElementById("grid-ground");
+    const gridFirst = document.getElementById("grid-first");
+    const gridSecond = document.getElementById("grid-second");
+    const displayTimeBadge = document.getElementById("display-time-badge");
+    const timeSlider = document.getElementById("time-slider");
+
+    function renderGrids() {
+      // Read active manual filters
+      const filterAC = document.getElementById("filter-ac").checked;
+      const filterProj = document.getElementById("filter-projector").checked;
+      const filterFree = document.getElementById("filter-freeonly").checked;
+      const minCap = parseInt(document.getElementById("filter-capacity").value, 10);
+
+      let freeCount = 0;
+      let soonCount = 0;
+      let occCount = 0;
+
+      gridGround.innerHTML = "";
+      gridFirst.innerHTML = "";
+      gridSecond.innerHTML = "";
+
+      ROOMS.forEach(room => {
+        const status = getRoomStatus(room, currentDay, currentMinutes);
+
+        // Update global counters
+        if (status.state === "free") freeCount++;
+        else if (status.state === "limited") soonCount++;
+        else occCount++;
+
+        // Apply filters
+        if (filterAC && !room.hasAC) return;
+        if (filterProj && !room.hasProjector) return;
+        if (filterFree && status.state === "occupied") return;
+        if (minCap > 0 && room.capacity < minCap) return;
+
+        // AI highlight check
+        const isAiRecommended = aiFilterResults && aiFilterResults.includes(room.id);
+        const isAiFilteredOut = aiFilterResults && !aiFilterResults.includes(room.id);
+
+        if (isAiFilteredOut) return;
+
+        // Card Glow & border styles
+        let borderClass = "border-slate-800 hover:border-slate-700";
+        let ringClass = "";
+        let badgeBg = "bg-slate-800 text-slate-300";
+
+        if (status.state === "free") {
+          borderClass = "border-emerald-500/30 hover:border-emerald-500/60";
+          ringClass = "pulse-glow-emerald";
+          badgeBg = "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30";
+        } else if (status.state === "limited") {
+          borderClass = "border-amber-500/30 hover:border-amber-500/60";
+          ringClass = "pulse-glow-amber";
+          badgeBg = "bg-amber-500/15 text-amber-300 border border-amber-500/30";
+        } else {
+          borderClass = "border-rose-500/20 opacity-85 hover:opacity-100";
+          badgeBg = "bg-rose-500/15 text-rose-300 border border-rose-500/30";
+        }
+
+        if (isAiRecommended) {
+          borderClass = "border-indigo-400 ring-2 ring-indigo-500/50 shadow-lg shadow-indigo-500/20";
+        }
+
+        const card = document.createElement("div");
+        card.className = `group relative rounded-2xl p-4 glass-panel ${borderClass} transition-all duration-200 cursor-pointer flex flex-col justify-between hover:-translate-y-0.5`;
+        card.onclick = () => openRoomModal(room.id);
+
+        card.innerHTML = `
+          <div>
+            <!-- Header bar with ID & Live Status badge -->
+            <div class="flex items-start justify-between gap-2 mb-2.5">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-base font-black text-white group-hover:text-indigo-300 transition">${room.id}</span>
+                  ${isAiRecommended ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500 text-white uppercase tracking-wider flex items-center gap-1"><i data-lucide="sparkles" class="w-2.5 h-2.5"></i> Best Match</span>' : ''}
+                </div>
+                <p class="text-xs text-slate-400 truncate max-w-[150px] sm:max-w-[180px]">${room.name}</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-tight ${badgeBg} whitespace-nowrap">
+                ${status.label}
+              </span>
+            </div>
+
+            <!-- Safe Stay Countdown or lecture info -->
+            <div class="rounded-xl p-2.5 mb-3 bg-slate-950/60 border border-slate-800/80">
+              <div class="flex items-center justify-between text-[11px] mb-1">
+                <span class="text-slate-400 flex items-center gap-1">
+                  <i data-lucide="${status.state === 'occupied' ? 'alert-circle' : 'shield'}" class="w-3.5 h-3.5 ${status.state === 'occupied' ? 'text-rose-400' : 'text-emerald-400'}"></i>
+                  ${status.state === 'occupied' ? 'Lecture in Progress' : 'Safe Stay Window'}
+                </span>
+                <span class="font-bold ${status.state === 'occupied' ? 'text-rose-300' : 'text-emerald-300'} font-mono">
+                  ${status.state === 'occupied' ? `Ends ${formatMinutesToTime(status.until)}` : `Until ${formatMinutesToTime(status.until)}`}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-300 leading-snug truncate">${status.detail}</p>
+            </div>
+
+            <!-- Specs & Amenities Chips -->
+            <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-300">
+              <span class="px-2 py-0.5 rounded-md bg-slate-800/90 border border-slate-700/60 flex items-center gap-1">
+                <i data-lucide="users" class="w-3 h-3 text-slate-400"></i> ${room.capacity} seats
+              </span>
+              <span class="px-2 py-0.5 rounded-md ${room.hasAC ? 'bg-indigo-950/60 border border-indigo-500/30 text-indigo-300' : 'bg-slate-800/90 border border-slate-700/60 text-slate-400'} flex items-center gap-1">
+                ❄️ ${room.hasAC ? 'AC' : 'Non-AC'}
+              </span>
+              ${room.hasProjector ? '<span class="px-2 py-0.5 rounded-md bg-slate-800/90 border border-slate-700/60 flex items-center gap-1">📽️ Proj</span>' : ''}
+              ${room.hasSmartBoard ? '<span class="px-2 py-0.5 rounded-md bg-purple-950/60 border border-purple-500/30 text-purple-300 flex items-center gap-1">✨ SmartBoard</span>' : ''}
+            </div>
+          </div>
+
+          <!-- Bottom Action Cue -->
+          <div class="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 group-hover:text-indigo-400 transition">
+            <span>Quiet: ${room.quietScore}/10</span>
+            <span class="flex items-center gap-1 font-semibold text-xs">
+              View Schedule <i data-lucide="chevron-right" class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"></i>
+            </span>
+          </div>
+        `;
+
+        if (room.floor === "ground") gridGround.appendChild(card);
+        else if (room.floor === "first") gridFirst.appendChild(card);
+        else if (room.floor === "second") gridSecond.appendChild(card);
+      });
+
+      // Update Header Stats
+      document.getElementById("stat-free-count").textContent = freeCount;
+      document.getElementById("stat-soon-count").textContent = soonCount;
+      document.getElementById("stat-occ-count").textContent = occCount;
+
+      // Update Lucide icons
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------
+    // 4. ROOM MODAL & SCHEDULE VIEWER
+    // -------------------------------------------------------------
+    const roomModal = document.getElementById("room-modal");
+    const modalCloseBtn = document.getElementById("modal-close-btn");
+    let activeModalRoom = null;
+
+    function openRoomModal(roomId) {
+      const room = ROOMS.find(r => r.id === roomId);
+      if (!room) return;
+      activeModalRoom = room;
+
+      const status = getRoomStatus(room, currentDay, currentMinutes);
+      document.getElementById("modal-room-id").textContent = `Room ${room.id} (${room.name})`;
+      document.getElementById("modal-room-subtitle").textContent = `${room.floorLabel} • Capacity: ${room.capacity} seats • Quiet Score: ${room.quietScore}/10`;
+      document.getElementById("modal-current-day").textContent = currentDay;
+
+      // Status Badge
+      const modalBadge = document.getElementById("modal-status-badge");
+      modalBadge.textContent = status.label;
+      modalBadge.className = `px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+        status.state === 'free' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' :
+        status.state === 'limited' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+        'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+      }`;
+
+      // Safe Banner
+      const safeHeading = document.getElementById("modal-safe-heading");
+      const safeDesc = document.getElementById("modal-safe-desc");
+      if (status.state === "free") {
+        safeHeading.textContent = `Undisturbed Study Window: ${formatDuration(status.remaining)}`;
+        safeDesc.textContent = `You can sit here safely until ${formatMinutesToTime(status.until)} before any professor or class arrives.`;
+      } else if (status.state === "limited") {
+        safeHeading.textContent = `Short Window: ${status.remaining} mins remaining`;
+        safeDesc.textContent = `A lecture is scheduled at ${formatMinutesToTime(status.until)}. Keep your items packed!`;
+      } else {
+        safeHeading.textContent = `Room Currently Occupied`;
+        safeDesc.textContent = `Active lecture: ${status.detail}. Free at approximately ${formatMinutesToTime(status.until)}.`;
+      }
+
+      // Amenities
+      const amenitiesContainer = document.getElementById("modal-amenities");
+      amenitiesContainer.innerHTML = `
+        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-xs text-slate-300 border border-slate-700">❄️ ${room.hasAC ? 'Air Conditioned' : 'Natural Ventilation'}</span>
+        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-xs text-slate-300 border border-slate-700">📽️ ${room.hasProjector ? 'Ceiling Projector' : 'Standard Whiteboard'}</span>
+        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-xs text-slate-300 border border-slate-700">⚡ Power: ${room.powerOutlets}</span>
+        <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-xs text-slate-300 border border-slate-700">🤫 Quiet: ${room.quietScore}/10</span>
+      `;
+
+      // Timetable list for current day
+      const timetableList = document.getElementById("modal-timetable-list");
+      timetableList.innerHTML = "";
+      const slots = room.schedule[currentDay] || [];
+
+      if (slots.length === 0) {
+        timetableList.innerHTML = `<div class="p-3 text-xs text-slate-400 bg-slate-950/40 rounded-xl text-center">No scheduled lectures today! Free all day.</div>`;
+      } else {
+        slots.forEach(slot => {
+          const isCurrent = currentMinutes >= slot.start && currentMinutes < slot.end;
+          const isPast = currentMinutes >= slot.end;
+          const row = document.createElement("div");
+          row.className = `p-3 rounded-xl flex items-center justify-between text-xs transition border ${
+            isCurrent ? 'bg-indigo-950/40 border-indigo-500/50 shadow-md' :
+            isPast ? 'bg-slate-950/30 border-slate-800/40 opacity-60' :
+            'bg-slate-950/60 border-slate-800'
+          }`;
+          row.innerHTML = `
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-white font-mono">${formatMinutesToTime(slot.start)} - ${formatMinutesToTime(slot.end)}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-indigo-300">${slot.code}</span>
+                ${isCurrent ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500 text-white">LIVE</span>' : ''}
+              </div>
+              <div class="text-slate-300 font-medium">${slot.title}</div>
+              <div class="text-slate-500 text-[11px]">Instructor: ${slot.prof} • Expected: ${slot.cap} students</div>
+            </div>
+            <div class="text-right">
+              <span class="text-[11px] font-semibold ${isCurrent ? 'text-amber-400' : isPast ? 'text-slate-500' : 'text-emerald-400'}">
+                ${isCurrent ? 'Happening Now' : isPast ? 'Concluded' : 'Upcoming'}
+              </span>
+            </div>
+          `;
+          timetableList.appendChild(row);
+        });
+      }
+
+      roomModal.classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    modalCloseBtn.onclick = () => roomModal.classList.add("hidden");
+    roomModal.onclick = (e) => {
+      if (e.target === roomModal) roomModal.classList.add("hidden");
+    };
+
+    // Copy directions and Share
+    document.getElementById("modal-copy-directions").onclick = () => {
+      if (!activeModalRoom) return;
+      const text = `Directions to ${activeModalRoom.id} (${activeModalRoom.name}): ${activeModalRoom.directions}`;
+      copyToClipboard(text, "Directions copied to clipboard!");
+    };
+
+    document.getElementById("modal-share-room").onclick = () => {
+      if (!activeModalRoom) return;
+      const status = getRoomStatus(activeModalRoom, currentDay, currentMinutes);
+      const text = `Hey team! Room ${activeModalRoom.id} on ${activeModalRoom.floorLabel} is ${status.label} right now! (${activeModalRoom.hasAC ? 'AC available' : 'Non-AC'}, Cap: ${activeModalRoom.capacity}).`;
+      copyToClipboard(text, "Room details & status copied to share!");
+    };
+
+    function copyToClipboard(text, successMessage) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        showToast(successMessage);
+      } catch (err) {
+        showToast("Copied to clipboard!");
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toast-msg").textContent = msg;
+      toast.classList.remove("translate-y-20", "opacity-0");
+      setTimeout(() => {
+        toast.classList.add("translate-y-20", "opacity-0");
+      }, 2600);
+    }
+
+    // -------------------------------------------------------------
+    // 5. AI ROOM FINDER (Gemini API + Robust Local Heuristic)
+    // -------------------------------------------------------------
+    const aiSearchForm = document.getElementById("ai-search-form");
+    const aiPromptInput = document.getElementById("ai-prompt-input");
+    const aiSearchBtn = document.getElementById("ai-search-btn");
+    const aiResultsBanner = document.getElementById("ai-results-banner");
+    const aiReasoningText = document.getElementById("ai-reasoning-text");
+    const aiFiltersExtracted = document.getElementById("ai-filters-extracted");
+    const closeAiResults = document.getElementById("close-ai-results");
+
+    // Local heuristic parser to serve as immediate fall-back or instant response
+    function localParseIntent(prompt) {
+      const text = prompt.toLowerCase();
+      let targetFloor = null;
+      if (text.includes("ground") || text.includes("floor 0") || text.includes("0th")) targetFloor = "ground";
+      else if (text.includes("1st") || text.includes("first") || text.includes("floor 1")) targetFloor = "first";
+      else if (text.includes("2nd") || text.includes("second") || text.includes("floor 2")) targetFloor = "second";
+
+      let needsAC = text.includes("ac") || text.includes("air condition") || text.includes("chilled") || text.includes("cool");
+      if (text.includes("non-ac") || text.includes("without ac")) needsAC = false;
+
+      let needsProjector = text.includes("projector") || text.includes("screen") || text.includes("presentation") || text.includes("slides");
+
+      // Extract duration in hours
+      let durationHours = 1;
+      const hourMatch = text.match(/(\d+)\s*(?:hour|hr|hours|hrs)/);
+      if (hourMatch) durationHours = parseInt(hourMatch[1], 10);
+
+      // Extract capacity / team size
+      let minCapacity = 1;
+      const teamMatch = text.match(/(\d+)\s*(?:people|persons|members|students|team of|seats)/);
+      if (teamMatch) minCapacity = parseInt(teamMatch[1], 10);
+      else if (text.includes("team") || text.includes("group")) minCapacity = 15;
+
+      return {
+        targetFloor,
+        needsAC,
+        needsProjector,
+        durationMinutes: durationHours * 60,
+        minCapacity
+      };
+    }
+
+    // Call Gemini 3 Flash Preview
+    async function askGeminiRoomFinder(userPrompt) {
+      const apiKey = ""; // Canvas provides key at runtime
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const systemPrompt = `You are the Campus Class Locator Assistant. Analyze the student's natural language request and extract search constraints:
+Return ONLY a valid JSON object matching this schema:
+{
+  "targetFloor": "ground" | "first" | "second" | null,
+  "needsAC": boolean,
+  "needsProjector": boolean,
+  "minCapacity": number,
+  "durationMinutes": number,
+  "reasoningSummary": "Short conversational sentence explaining the recommendation"
+}`;
+
+      const payload = {
+        contents: [{ parts: [{ text: `Student query: "${userPrompt}". Current Day is ${currentDay}, current time is ${formatMinutesToTime(currentMinutes)}.` }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          responseMimeType: "application/json"
+        }
+      };
+
+      try {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        const data = await res.json();
+        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!jsonText) throw new Error("No text candidate");
+        return { parsed: JSON.parse(jsonText), source: "Gemini 3 Flash" };
+      } catch (err) {
+        console.warn("Falling back to internal heuristic parser:", err);
+        const fallback = localParseIntent(userPrompt);
+        return {
+          parsed: {
+            ...fallback,
+            reasoningSummary: `Parsed query for ${fallback.durationMinutes / 60} hour(s) free window with ${fallback.needsAC ? 'AC' : 'any cooling'} and min capacity of ${fallback.minCapacity}.`
+          },
+          source: "Local Heuristic Engine"
+        };
+      }
+    }
+
+    async function handleAISearch(promptText) {
+      if (!promptText.trim()) return;
+
+      aiSearchBtn.disabled = true;
+      aiSearchBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Analyzing...</span>`;
+      lucide.createIcons();
+
+      try {
+        const { parsed, source } = await askGeminiRoomFinder(promptText);
+
+        // Filter and score rooms according to parsed constraints
+        const matches = ROOMS.map(room => {
+          const status = getRoomStatus(room, currentDay, currentMinutes);
+          let score = 0;
+          let matchReasons = [];
+
+          // Free duration check
+          if (status.state === "occupied") {
+            score -= 100;
+          } else {
+            if (status.remaining >= parsed.durationMinutes) {
+              score += 50;
+              matchReasons.push(`Free for ${formatDuration(status.remaining)} (exceeds ${parsed.durationMinutes / 60}h needed)`);
+            } else {
+              score -= 30; // Not free long enough
+            }
+          }
+
+          // Floor preference
+          if (parsed.targetFloor) {
+            if (room.floor === parsed.targetFloor) {
+              score += 30;
+              matchReasons.push(`Located on requested ${room.floorLabel}`);
+            } else {
+              score -= 40;
+            }
+          }
+
+          // AC preference
+          if (parsed.needsAC) {
+            if (room.hasAC) {
+              score += 20;
+              matchReasons.push("Equipped with Air Conditioning");
+            } else {
+              score -= 25;
+            }
+          }
+
+          // Projector preference
+          if (parsed.needsProjector) {
+            if (room.hasProjector) {
+              score += 20;
+              matchReasons.push("Equipped with Projector for presentations");
+            } else {
+              score -= 25;
+            }
+          }
+
+          // Capacity check
+          if (room.capacity >= parsed.minCapacity) {
+            score += 15;
+            matchReasons.push(`Fits ${room.capacity} seats (>= ${parsed.minCapacity})`);
+          } else {
+            score -= 50;
+          }
+
+          return { room, score, matchReasons, status };
+        });
+
+        // Filter those with positive scores, sort descending
+        const validMatches = matches.filter(m => m.score > 0).sort((a, b) => b.score - a.score);
+        const topRoomIds = validMatches.map(m => m.room.id);
+
+        aiFilterResults = topRoomIds;
+
+        // Render Reasoning Banner
+        document.getElementById("ai-badge-source").textContent = source;
+        if (validMatches.length > 0) {
+          const best = validMatches[0];
+          aiReasoningText.innerHTML = `
+            <strong>Found ${validMatches.length} room(s) matching your request.</strong> Top choice is 
+            <span class="text-indigo-300 font-bold">Room ${best.room.id} (${best.room.name})</span>: ${best.matchReasons.join("; ")}.
+            You won't be kicked out until at least ${formatMinutesToTime(best.status.until)}.
+          `;
+        } else {
+          aiReasoningText.innerHTML = `No classroom fully met all criteria for this exact time and duration. Try checking a different floor or scrubbing to another hour.`;
+          aiFilterResults = [];
+        }
+
+        // Show parsed tags
+        aiFiltersExtracted.innerHTML = `
+          <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">⏱️ Min Free: ${parsed.durationMinutes / 60} hr</span>
+          ${parsed.targetFloor ? `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">📍 ${parsed.targetFloor} floor</span>` : ''}
+          ${parsed.needsAC ? `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">❄️ AC Required</span>` : ''}
+          ${parsed.needsProjector ? `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">📽️ Projector</span>` : ''}
+          <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">👥 Min Cap: ${parsed.minCapacity}</span>
+        `;
+
+        aiResultsBanner.classList.remove("hidden");
+        renderGrids();
+
+      } catch (e) {
+        console.error("AI error:", e);
+      } finally {
+        aiSearchBtn.disabled = false;
+        aiSearchBtn.innerHTML = `<span>Ask AI</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+        lucide.createIcons();
+      }
+    }
+
+    aiSearchForm.onsubmit = (e) => {
+      e.preventDefault();
+      handleAISearch(aiPromptInput.value);
+    };
+
+    // Prompt pills click
+    document.querySelectorAll(".prompt-chip").forEach(chip => {
+      chip.onclick = () => {
+        const text = chip.textContent.replace(/"/g, "").trim();
+        aiPromptInput.value = text;
+        handleAISearch(text);
+      };
+    });
+
+    closeAiResults.onclick = () => {
+      aiResultsBanner.classList.add("hidden");
+      aiFilterResults = null;
+      renderGrids();
+    };
+
+    // -------------------------------------------------------------
+    // 6. TIME SCRUBBER & FILTER EVENT LISTENERS
+    // -------------------------------------------------------------
+    function updateTime(mins) {
+      currentMinutes = parseInt(mins, 10);
+      displayTimeBadge.textContent = formatMinutesToTime(currentMinutes);
+      renderGrids();
+    }
+
+    timeSlider.oninput = (e) => updateTime(e.target.value);
+
+    // Day tabs
+    document.querySelectorAll(".day-tab").forEach(tab => {
+      const day = tab.getAttribute("data-day");
+      if (day === currentDay) {
+        tab.classList.add("bg-indigo-600", "text-white");
+      } else {
+        tab.classList.add("text-slate-400", "hover:text-white");
+      }
+
+      tab.onclick = () => {
+        document.querySelectorAll(".day-tab").forEach(t => {
+          t.classList.remove("bg-indigo-600", "text-white");
+          t.classList.add("text-slate-400");
+        });
+        tab.classList.remove("text-slate-400");
+        tab.classList.add("bg-indigo-600", "text-white");
+        currentDay = day;
+        renderGrids();
+      };
+    });
+
+    // Snap to "Right Now" button (Simulated 1:30 PM on Monday)
+    document.getElementById("snap-now-btn").onclick = () => {
+      currentDay = "Mon";
+      timeSlider.value = 810; // 1:30 PM
+      updateTime(810);
+
+      // Reset day tab styles
+      document.querySelectorAll(".day-tab").forEach(t => {
+        if (t.getAttribute("data-day") === "Mon") {
+          t.classList.add("bg-indigo-600", "text-white");
+          t.classList.remove("text-slate-400");
+        } else {
+          t.classList.remove("bg-indigo-600", "text-white");
+          t.classList.add("text-slate-400");
+        }
+      });
+      showToast("Snapped to Monday, 1:30 PM (Mid-day peak)");
+    };
+
+    // Checkbox & dropdown changes
+    ["filter-ac", "filter-projector", "filter-freeonly", "filter-capacity"].forEach(id => {
+      document.getElementById(id).onchange = () => renderGrids();
+    });
+
+    // -------------------------------------------------------------
+    // 7. INITIAL LAUNCH
+    // -------------------------------------------------------------
+    window.onload = function () {
+      updateTime(810);
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
